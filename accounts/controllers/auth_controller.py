@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from accounts.dto.auth_dto import RegisterDTO, LoginDTO, ValidationError
+from accounts.dto.auth_dto import RegisterDTO, LoginDTO, ValidationError, OtpDTO, VerifyOtpDTO, UpdatePasswordDTO
 from accounts.services.auth_service import AuthService, AuthError
 from accounts.utils.jwt_handler import decode_token
 
@@ -19,17 +19,21 @@ def _parse_body(request) -> dict:
 
 
 # ---------- Page renderers ----------
-
+@require_http_methods(["GET"])
 def login_page(request):
     return render(request, "login.html")
 
-
+@require_http_methods(["GET"])
 def register_page(request):
     return render(request, "register.html")
 
-
+@require_http_methods(["GET"])
 def dashboard_page(request):
     return render(request, "dashboard.html")
+
+@require_http_methods(["GET"])
+def forget_passowrd_page(request):
+    return render(request, "forget_password.html")
 
 
 # ---------- API endpoints ----------
@@ -53,6 +57,42 @@ def login(request):
     try:
         dto = LoginDTO(_parse_body(request))
         result = service.login(dto)
+        return JsonResponse(result, status=200)
+    except ValidationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except AuthError as e:
+        return JsonResponse({"error": str(e)}, status=401)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def forgetPassword(request):
+    try:
+        dto = OtpDTO(_parse_body(request))
+        result = service.forgetPassword(dto)
+        return JsonResponse(result, status=200)
+    except ValidationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except AuthError as e:
+        return JsonResponse({"error": str(e)}, status=401)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def verifyOTP(request):
+    try:
+        dto = VerifyOtpDTO(_parse_body(request))
+        result = service.verifyOTP(dto)
+        return JsonResponse(result, status=200)
+    except ValidationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except AuthError as e:
+        return JsonResponse({"error": str(e)}, status=401)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def updatePassword(request):
+    try:
+        dto = UpdatePasswordDTO(_parse_body(request))
+        result = service.updatePassword(dto)
         return JsonResponse(result, status=200)
     except ValidationError as e:
         return JsonResponse({"error": str(e)}, status=400)

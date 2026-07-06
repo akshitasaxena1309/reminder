@@ -8,8 +8,6 @@ class ValidationError(Exception):
 
 
 class RegisterDTO:
-    """Validates and normalizes registration input before it reaches the service layer."""
-
     def __init__(self, data: dict):
         self.name = (data.get("name") or "").strip()
         self.email = (data.get("email") or "").strip().lower()
@@ -26,8 +24,6 @@ class RegisterDTO:
 
 
 class LoginDTO:
-    """Validates login input."""
-
     def __init__(self, data: dict):
         self.email = (data.get("email") or "").strip().lower()
         self.password = data.get("password") or ""
@@ -38,3 +34,36 @@ class LoginDTO:
             raise ValidationError("Valid email is required.")
         if not self.password:
             raise ValidationError("Password is required.")
+        
+class UpdatePasswordDTO:
+    def __init__(self, data: dict):
+        self.email = (data.get("email") or "").strip().lower()
+        self.password = data.get("password") or ""
+        self._validate()
+
+    def _validate(self):
+        if not self.email or not EMAIL_RE.match(self.email):
+            raise ValidationError("Valid email is required.")
+        if not self.password:
+            raise ValidationError("Password is required.")
+        
+class OtpDTO:
+    def __init__(self,data:dict):
+        self.email = (data.get("email") or "").strip().lower()
+        self._validate()
+    
+    def _validate(self):
+        if not self.email or not EMAIL_RE.match(self.email):
+            raise ValidationError("Valid email is required.")
+        
+class VerifyOtpDTO:
+    def __init__(self,data:dict):
+        self.email = (data.get("email") or "").strip().lower()
+        self.otp = data.get("otp") or ""
+        self._validate()
+    
+    def _validate(self):
+        if not self.email or not EMAIL_RE.match(self.email):
+            raise ValidationError("Valid email is required.")
+        if not self.otp:
+            raise ValidationError("OTP is required.")

@@ -32,3 +32,16 @@ class UserRepository:
         result = self.collection.insert_one(user.to_document())
         user.id = str(result.inserted_id)
         return user
+
+    from bson import ObjectId
+
+    def update_password(self, user_id: str, hashed_password: str):
+        result = self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "password": hashed_password
+                }
+            }
+        )
+        return result.modified_count

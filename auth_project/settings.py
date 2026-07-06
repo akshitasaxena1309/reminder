@@ -39,6 +39,13 @@ TEMPLATES = [
     },
 ]
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "auth-project-cache",
+    }
+}
+
 WSGI_APPLICATION = "auth_project.wsgi.application"
 
 DATABASES = {}
