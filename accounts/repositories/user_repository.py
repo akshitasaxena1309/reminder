@@ -31,10 +31,6 @@ class UserRepository:
     def update_password(self, user_id: str, hashed_password: str):
         result = self.collection.update_one(
             {"_id": ObjectId(user_id)},
-            {
-                "$set": {
-                    "password": hashed_password
-                }
-            }
+            {"$set": {"password": hashed_password}}
         )
         return result.modified_count
