@@ -31,7 +31,7 @@ class ReminderService:
                 send_mail(
                     subject="Message From Akshita",
                     message=f"Hey, \n\n{habit.title}\n",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[habit.reminder_email],
                     fail_silently=False,
                 )

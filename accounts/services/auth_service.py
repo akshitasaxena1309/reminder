@@ -36,6 +36,11 @@ class AuthService:
             raise AuthError("Invalid email or password.")
         otp = random.randint(100000, 999999)
         try:
+            print("EMAIL_HOST =", settings.EMAIL_HOST)
+            print("EMAIL_PORT =", settings.EMAIL_PORT)
+            print("EMAIL_USE_TLS =", settings.EMAIL_USE_TLS)
+            print("EMAIL_HOST_USER =", settings.EMAIL_HOST_USER)
+            print("EMAIL_HOST_PASSWORD exists =", bool(settings.EMAIL_HOST_PASSWORD))
             send_mail(
                 subject="OTP for Email Verification",
                 message=f"Hey,\n\nYour OTP is {otp}",
