@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-3">
+    <div class="card-modern rounded-3xl p-8 sticky top-4 hover-lift">
+      <div class="text-center">
+        <div class="relative inline-block">
+          <div class="w-28 h-28 rounded-full avatar-gradient flex items-center justify-center text-5xl font-bold text-white shadow-xl shadow-indigo-200 mx-auto">
+            <span id="avatarLetter">U</span>
+          </div>
+          <div class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-400 border-4 border-white rounded-full"></div>
+        </div>
+        <h2 id="profileName" class="text-xl font-bold text-slate-800 mt-4">Loading...</h2>
+        <p id="profileEmail" class="text-sm text-slate-400 mt-1">Loading...</p>
+        <div class="mt-6 space-y-3">
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 text-sm">Account</span>
+              <span class="text-emerald-600 text-sm font-semibold flex items-center gap-1">
+                <span class="dot bg-emerald-400"></span> Active
+              </span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 text-sm">Total Reminders</span>
+              <span id="totalReminders" class="text-slate-800 font-bold text-lg">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 text-sm">Active</span>
+              <span id="activeReminders" class="text-emerald-600 font-bold text-lg">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="divider my-6"></div>
+        <button onclick="logout()"
+          class="w-full py-3.5 rounded-2xl btn-danger text-sm font-semibold flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="lg:col-span-9 space-y-6">
+    <div class="card-modern rounded-3xl p-8">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-black gradient-text">Dashboard</h1>
+          <p class="text-slate-400 text-sm mt-1">Manage your reminders and stay on track</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="refreshData()" id="refreshBtn"
+            class="px-4 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-all hover:scale-105 flex items-center gap-2">
+            <svg id="refreshIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span id="refreshText">Refresh</span>
+          </button>
+          <a href="{% url 'add_reminder_page' %}"
+            class="px-6 py-3.5 rounded-2xl btn-primary text-sm font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Reminder
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="msg" class="hidden rounded-2xl p-4"></div>
+    <div class="card-modern rounded-3xl p-8">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold text-slate-700">Your Reminders</h2>
+        <span id="reminderCount" class="text-sm text-slate-400"></span>
+      </div>
+      <div id="loader" class="flex flex-col items-center justify-center py-16">
+        <div class="loader-spinner w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p class="text-slate-400 mt-4 text-sm">Loading your reminders...</p>
+      </div>
+      <div id="habitList" class="space-y-3 hidden">
+      </div>
+      <div id="emptyState" class="hidden text-center py-16">
+        <div class="text-7xl mb-4">✨</div>
+        <h3 class="text-xl font-semibold text-slate-600">All caught up!</h3>
+        <p class="text-slate-400 mt-2 text-sm max-w-sm mx-auto">
+          You don't have any reminders yet. Create your first one to get started.
+        </p>
+        <a href="{% url 'add_reminder_page' %}"
+          class="inline-block mt-6 px-6 py-3 rounded-2xl btn-primary text-sm font-semibold">
+          Create Reminder
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function convertUTCtoIST(utcDateString) {
+  if (!utcDateString) return "Never";
+  const utcDate = new Date(utcDateString);
+  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+  const istDate = new Date(utcDate.getTime() + istOffset);
+  const options = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  };
+  
+  return istDate.toLocaleString('en-IN', options);
+}
+
+function showLoader() {
+  document.getElementById("loader").classList.remove("hidden");
+  document.getElementById("habitList").classList.add("hidden");
+  document.getElementById("emptyState").classList.add("hidden");
+}
+
+function hideLoader() {
+  document.getElementById("loader").classList.add("hidden");
+  document.getElementById("habitList").classList.remove("hidden");
+}
+
+async function refreshData() {
+  const refreshBtn = document.getElementById("refreshBtn");
+  const refreshIcon = document.getElementById("refreshIcon");
+  const refreshText = document.getElementById("refreshText");
+  
+  refreshIcon.classList.add("animate-spin");
+  refreshText.textContent = "Refreshing...";
+  refreshBtn.disabled = true;
+  refreshBtn.classList.add("opacity-50", "cursor-not-allowed");
+  
+  await loadHabits();
+  showMsg("Reminders refreshed successfully!", false);
+  setTimeout(() => {
+    refreshIcon.classList.remove("animate-spin");
+    refreshText.textContent = "Refresh";
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove("opacity-50", "cursor-not-allowed");
+  }, 500);
+}
+
+async function loadProfile() {
+  try {
+    const res = await authFetch("{%url 'api_me'%");
+    if (!res) return;
+    const data = await res.json();
+    if (res.ok) {
+      const name = data.user.name || data.user.email;
+      document.getElementById("profileName").textContent = name;
+      document.getElementById("profileEmail").textContent = data.user.email;
+      document.getElementById("avatarLetter").textContent = name.charAt(0).toUpperCase();
+    }
+  } catch (error) {
+    console.error("Error loading profile:", error);
+  }
+}
+
+function showMsg(text, isError = true) {
+  const msg = document.getElementById("msg");
+  msg.classList.remove("hidden");
+  msg.className = `rounded-2xl p-4 ${
+    isError 
+      ? "bg-red-50 text-red-700 border border-red-100" 
+      : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+  }`;
+  msg.textContent = text;
+  setTimeout(() => {
+    msg.classList.add("hidden");
+  }, 5000);
+}
+
+async function loadHabits() {
+  showLoader(); 
+  try {
+    const res = await authFetch("{%url 'habits_collection'%}");
+    if (!res) {
+      hideLoader();
+      return;
+    }
+    const data = await res.json();
+    if (!res.ok) {
+      hideLoader();
+      return showMsg(data.error || "Failed to load reminders");
+    }
+    const list = document.getElementById("habitList");
+    const emptyState = document.getElementById("emptyState");
+    list.innerHTML = "";
+    document.getElementById("totalReminders").textContent = data.habits.length;
+    const activeCount = data.habits.filter(h => h.is_active).length;
+    document.getElementById("activeReminders").textContent = activeCount;
+    document.getElementById("reminderCount").textContent = `${data.habits.length} total`;
+
+    if (data.habits.length === 0) {
+      hideLoader();
+      emptyState.classList.remove("hidden");
+      return;
+    }
+    emptyState.classList.add("hidden");
+
+    data.habits.forEach((h, index) => {
+      const lastSent = convertUTCtoIST(h.last_sent_at);
+      const now = new Date();
+      const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+      const currentISTTime = istNow.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+
+      const card = document.createElement("div");
+      card.className = `reminder-card fade-in fade-in-delay-${Math.min(index + 1, 3)}`;
+      
+      card.innerHTML = `
+        <div class="flex flex-wrap items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-2 flex-wrap">
+              <span class="text-2xl">${h.is_active ? '🔔' : '🔕'}</span>
+              <h3 class="font-semibold text-lg text-slate-800 truncate">${h.title}</h3>
+              <span class="status-badge ${h.is_active ? 'status-badge-active' : 'status-badge-paused'}">
+                <span class="dot"></span>
+                ${h.is_active ? 'Active' : 'Paused'}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <span class="text-slate-500 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                ${h.reminder_email}
+              </span>
+              <span class="text-slate-400 text-xs flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Last sent: ${lastSent}
+              </span>
+            </div>
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button onclick="toggleActive('${h.id}', ${!h.is_active})"
+              class="px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-105 ${
+                h.is_active 
+                  ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200" 
+                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+              }">
+              ${h.is_active ? '⏸ Pause' : '▶ Resume'}
+            </button>
+            <button onclick="deleteHabit('${h.id}')"
+              class="px-4 py-2 rounded-xl text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all hover:scale-105 border border-red-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+    
+    hideLoader(); // Hide loader after success
+  } catch (error) {
+    hideLoader();
+    showMsg("Failed to load reminders. Please try again.");
+  }
+}
+
+async function toggleActive(id, newState) {
+  try {
+    const res = await authFetch(`/api/habits/${id}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: newState }),
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (!res.ok) return showMsg(data.error || "Failed to update reminder");
+    await loadHabits();
+    showMsg(`Reminder ${newState ? 'activated' : 'paused'} successfully`, false);
+  } catch (error) {
+    showMsg("Failed to update reminder. Please try again.");
+  }
+}
+
+async function deleteHabit(id) {
+  if (!confirm("Are you sure you want to delete this reminder? This action cannot be undone.")) return;
+  try {
+    const res = await authFetch(`/api/habits/${id}/`, { method: "DELETE" });
+    if (!res) return;
+    const data = await res.json();
+    if (!res.ok) return showMsg(data.error || "Failed to delete reminder");
+    await loadHabits();
+    showMsg("Reminder deleted successfully", false);
+  } catch (error) {
+    showMsg("Failed to delete reminder. Please try again.");
+  }
+}
+
+function logout() {
+  if (!confirm("Are you sure you want to sign out?")) return;
+  localStorage.removeItem("token");
+  window.location.href = "/";
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  loadProfile();
+  loadHabits();
+});
+</script>
+
+<style>
+/* Loader Animation */
+.loader-spinner {
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Fade animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.fade-in-delay-1 { animation-delay: 0.1s; }
+.fade-in-delay-2 { animation-delay: 0.2s; }
+.fade-in-delay-3 { animation-delay: 0.3s; }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Refresh button spin animation */
+#refreshIcon.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Status badge styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-active {
+  background-color: #ecfdf5;
+  color: #065f46;
+}
+
+.status-badge-paused {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+}
+
+.status-badge-active .dot {
+  background-color: #10b981;
+}
+
+.status-badge-paused .dot {
+  background-color: #f59e0b;
+}
+</style>
+{% endblock %}

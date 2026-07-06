@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}Add Reminder{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  
+  <!-- Main Form -->
+  <div class="lg:col-span-8">
+    <div class="card-modern rounded-3xl p-8">
+      <!-- Header -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl font-black gradient-text">Create Reminder</h1>
+          <p class="text-slate-400 text-sm mt-1">Set up a new reminder to keep you on track</p>
+        </div>
+        <a href="/dashboard/" 
+          class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-all hover:scale-105 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+
+      <!-- Alert Messages -->
+      <div id="msg" class="hidden rounded-2xl p-4 mb-6"></div>
+
+      <form id="reminderForm" onsubmit="event.preventDefault(); createHabit();" class="space-y-6">
+        <!-- Title -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">
+            Reminder Name
+          </label>
+          <input id="title" type="text" 
+            placeholder="e.g. Drink water, Morning workout, Take medication"
+            class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder:text-slate-400 text-slate-800">
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">
+            Reminder Email
+          </label>
+          <input id="reminder_email" type="email" 
+            placeholder="your-email@example.com"
+            class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder:text-slate-400 text-slate-800">
+        </div>
+
+        <!-- Mode Switch -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-3">
+            Schedule Mode
+          </label>
+          <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+            <button type="button" id="tabQuickBtn" onclick="setMode('quick')"
+              class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-200">
+              Quick Presets
+            </button>
+            <button type="button" id="tabCustomBtn" onclick="setMode('custom')"
+              class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:text-slate-800">
+              Custom Time
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Presets Panel -->
+        <div id="panelQuick" class="space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Choose a Preset
+            </label>
+            <select id="preset" onchange="applyPreset()"
+              class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-slate-800">
+              <option value="">-- Choose a preset --</option>
+              <option value="* * * * *">🔄 Every minute</option>
+              <option value="*/5 * * * *">🔄 Every 5 minutes</option>
+              <option value="*/15 * * * *">🔄 Every 15 minutes</option>
+              <option value="*/30 * * * *">🔄 Every 30 minutes</option>
+              <option value="0 * * * *">🔄 Every hour</option>
+              <option value="0 9 * * *">🌅 Daily at 9:00 AM</option>
+              <option value="0 21 * * *">🌙 Daily at 9:00 PM</option>
+              <option value="0 9 * * 1-5">💼 Weekdays at 9:00 AM</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Time Panel -->
+        <div id="panelCustom" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Time
+            </label>
+            <div class="flex items-center gap-3">
+              <input id="customTime" type="time" value="13:30"
+                class="flex-1 px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-slate-800">
+              <span class="text-xs text-slate-400 bg-slate-100 px-3 py-2 rounded-xl">24h UTC</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-3">
+              Repeat On
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" id="dayEvery" checked onchange="onEveryDayToggle()" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Every Day
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="1" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Mon
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="2" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Tue
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="3" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Wed
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="4" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Thu
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="5" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Fri
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="6" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Sat
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-100 transition">
+                <input type="checkbox" value="0" class="dayBox w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                Sun
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cron Expression -->
+        <div>
+          {% comment %} <label class="block text-sm font-semibold text-slate-700 mb-2">
+            Cron Expression
+            <span class="text-xs font-normal text-slate-400 ml-2">(auto-generated — editable)</span>
+          </label> {% endcomment %}
+          <input id="cron_expression" type="text" hidden
+            placeholder="e.g. 30 13 * * *"
+            class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-mono text-sm text-slate-800">
+        </div>
+
+        <!-- Submit Button - FIXED -->
+        <div class="flex justify-end">
+          <button type="submit"
+            id="submitBtn"
+            class="px-6 py-4 rounded-2xl text-base font-semibold flex items-center justify-center gap-2 text-white transition-all duration-300"
+            style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);"
+            onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 25px rgba(79, 70, 229, 0.5)'"
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(79, 70, 229, 0.4)'">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create Reminder
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sidebar Tips -->
+  <div class="lg:col-span-4">
+    <div class="card-modern rounded-3xl p-8 sticky top-4">
+      <h3 class="text-lg font-bold text-slate-800 mb-4">💡 Quick Tips</h3>
+      
+      <div class="space-y-4">
+        <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">📝</span>
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700">Clear Message</h4>
+              <p class="text-xs text-slate-500 mt-1">Use specific, actionable names for your reminders.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">⏰</span>
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700">Choose Wisely</h4>
+              <p class="text-xs text-slate-500 mt-1">Pick a schedule that matches your routine for better consistency.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">📧</span>
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700">Valid Email</h4>
+              <p class="text-xs text-slate-500 mt-1">Make sure to use a valid email address to receive notifications.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-purple-50 rounded-2xl border border-purple-100">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">🔢</span>
+            <div>
+              <h4 class="text-sm font-semibold text-slate-700">Cron Syntax</h4>
+              <p class="text-xs text-slate-500 mt-1">Format: <code class="bg-white px-1.5 py-0.5 rounded text-xs">minute hour day month weekday</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider my-6"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+if (!token) window.location.href = "/";
+
+function setMode(mode) {
+  const quickBtn = document.getElementById("tabQuickBtn");
+  const customBtn = document.getElementById("tabCustomBtn");
+  const quickPanel = document.getElementById("panelQuick");
+  const customPanel = document.getElementById("panelCustom");
+
+  if (mode === "quick") {
+    quickPanel.classList.remove("hidden");
+    customPanel.classList.add("hidden");
+    quickBtn.className = "px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-200";
+    customBtn.className = "px-5 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:text-slate-800";
+  } else {
+    quickPanel.classList.add("hidden");
+    customPanel.classList.remove("hidden");
+    customBtn.className = "px-5 py-2.5 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-200";
+    quickBtn.className = "px-5 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-600 hover:text-slate-800";
+    buildCronFromCustomTime();
+  }
+}
+
+function applyPreset() {
+  const preset = document.getElementById("preset").value;
+  if (preset) document.getElementById("cron_expression").value = preset;
+}
+
+function onEveryDayToggle() {
+  const everyDay = document.getElementById("dayEvery").checked;
+  document.querySelectorAll(".dayBox").forEach(box => {
+    box.checked = false;
+    box.disabled = everyDay;
+  });
+  buildCronFromCustomTime();
+}
+
+function buildCronFromCustomTime() {
+  const timeVal = document.getElementById("customTime").value;
+  if (!timeVal) return;
+
+  const [localHour, localMinute] = timeVal.split(":").map(Number);
+  const now = new Date();
+  const localDate = new Date(
+    now.getFullYear(), now.getMonth(), now.getDate(),
+    localHour, localMinute, 0
+  );
+
+  const utcHour = localDate.getUTCHours();
+  const utcMinute = localDate.getUTCMinutes();
+
+  const everyDay = document.getElementById("dayEvery").checked;
+  let weekday = "*";
+
+  if (!everyDay) {
+    const selected = Array.from(document.querySelectorAll(".dayBox:checked")).map(b => b.value);
+    weekday = selected.length > 0 ? selected.join(",") : "*";
+  }
+
+  document.getElementById("cron_expression").value = `${utcMinute} ${utcHour} * * ${weekday}`;
+}
+
+function showMsg(text, isError = true) {
+  const msg = document.getElementById("msg");
+  msg.classList.remove("hidden");
+  msg.className = `rounded-2xl p-4 ${
+    isError 
+      ? "bg-red-50 text-red-700 border border-red-100" 
+      : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+  }`;
+  msg.textContent = text;
+  setTimeout(() => {
+    msg.classList.add("hidden");
+  }, 5000);
+}
+
+async function createHabit() {
+  const btn = document.getElementById('submitBtn');
+  const originalText = btn.innerHTML;
+  
+  const title = document.getElementById("title").value.trim();
+  const email = document.getElementById("reminder_email").value.trim();
+  const cron = document.getElementById("cron_expression").value.trim();
+
+  // Validation
+  if (!title) {
+    showMsg("Please enter a reminder name");
+    document.getElementById("title").focus();
+    return;
+  }
+  if (!email) {
+    showMsg("Please enter a valid email address");
+    document.getElementById("reminder_email").focus();
+    return;
+  }
+  if (!cron) {
+    showMsg("Please select or enter a valid schedule");
+    document.getElementById("cron_expression").focus();
+    return;
+  }
+
+  // Show loading state
+  btn.disabled = true;
+  btn.innerHTML = `
+    <svg class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    Creating...
+  `;
+  btn.style.opacity = '0.8';
+
+  const payload = { title, reminder_email: email, cron_expression: cron };
+
+  try {
+    const res = await authFetch("{% url 'habits_collection' %}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res) return;
+
+    const data = await res.json();
+    if (!res.ok) {
+      // Reset button on error
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.innerHTML = originalText;
+      return showMsg(data.error || "Failed to create reminder");
+    }
+
+    // Success - redirect to dashboard
+    window.location.href = "/dashboard/";
+  } catch (error) {
+    console.error("Error creating habit:", error);
+    // Reset button on error
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.innerHTML = originalText;
+    showMsg("Failed to create reminder. Please try again.");
+  }
+}
+
+// Event Listeners
+document.getElementById("customTime").addEventListener("change", buildCronFromCustomTime);
+document.querySelectorAll(".dayBox").forEach(box => {
+  box.addEventListener("change", buildCronFromCustomTime);
+});
+
+// Initialize with default mode
+setMode('quick');
+</script>
+{% endblock %}
