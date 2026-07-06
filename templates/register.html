@@ -189,7 +189,6 @@ async function submitForm() {
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
-  const terms = document.getElementById("terms").checked;
 
   // Validation
   if (!name) {
@@ -212,11 +211,6 @@ async function submitForm() {
     document.getElementById("password").focus();
     return;
   }
-  if (!terms) {
-    showMsg("Please agree to the Terms of Service and Privacy Policy");
-    return;
-  }
-
   // Show loading state
   const btn = document.getElementById("registerBtn");
   const btnText = document.getElementById("btnText");

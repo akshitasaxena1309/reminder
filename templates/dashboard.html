@@ -152,7 +152,7 @@ async function refreshData() {
 
 async function loadProfile() {
   try {
-    const res = await authFetch("{%url 'api_me'%");
+    const res = await authFetch("{%url 'api_me'%}");
     if (!res) return;
     const data = await res.json();
     if (res.ok) {
