@@ -1,14 +1,9 @@
 from bson import ObjectId
 from accounts.db.connection import get_db
 from accounts.models.user_model import User
-
+from bson import ObjectId
 
 class UserRepository:
-    """
-    Only this layer touches MongoDB directly.
-    It accepts/returns User entities, never raw dicts, to the layers above it.
-    """
-
     def __init__(self):
         self.collection = get_db()["users"]
         self.collection.create_index("email", unique=True)
@@ -32,8 +27,6 @@ class UserRepository:
         result = self.collection.insert_one(user.to_document())
         user.id = str(result.inserted_id)
         return user
-
-    from bson import ObjectId
 
     def update_password(self, user_id: str, hashed_password: str):
         result = self.collection.update_one(
