@@ -47,3 +47,4 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@habittracker.com")
 
 ENABLE_SCHEDULER = os.getenv("ENABLE_SCHEDULER", "False") == "True"
+CRON_SECRET = os.getenv("CRON_SECRET")
