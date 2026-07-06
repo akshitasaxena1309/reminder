@@ -39,9 +39,9 @@ class AuthService:
             send_mail(
                 subject="OTP for Email Verification",
                 message=f"Hey,\n\nYour OTP is {otp}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[dto.email],
-                fail_silently=False,   # Raise exception if sending fails
+                fail_silently=False,   
             )
         except Exception as e:
             raise AuthError(f"Failed to send OTP: {str(e)}")
