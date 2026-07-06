@@ -12,7 +12,7 @@ urlpatterns = [
     path("auth/register/", AuthController.register, name="api_register"),
     path("auth/login/", AuthController.login, name="api_login"),
     path("auth/me/", AuthController.me, name="api_me"),
-    path("auth/forget-password", AuthController.forgetPassword, name="forget_password"),
-    path("auth/verify-otp", AuthController.verifyOTP, name="verify_otp"),
-    path("auth/update-password", AuthController.updatePassword, name="update_password"),
+    path("auth/forget-password/", AuthController.forgetPassword, name="forget_password"),
+    path("auth/verify-otp/", AuthController.verifyOTP, name="verify_otp"),
+    path("auth/update-password/", AuthController.updatePassword, name="update_password"),
 ]

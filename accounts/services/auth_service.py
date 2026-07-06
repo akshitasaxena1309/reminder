@@ -3,7 +3,7 @@ from accounts.utils.password import hash_password, verify_password
 from accounts.utils.jwt_handler import create_token
 import random
 from django.core.cache import cache
-from django.core.mail import send_mail
+from django.core.mail import get_connection, send_mail
 from django.conf import settings
 class AuthError(Exception):
     pass
@@ -37,22 +37,45 @@ class AuthService:
         otp = random.randint(100000, 999999)
         try:
             print("=" * 50)
+            print("EMAIL_BACKEND:", settings.EMAIL_BACKEND)
             print("EMAIL_HOST:", settings.EMAIL_HOST)
             print("EMAIL_PORT:", settings.EMAIL_PORT)
             print("EMAIL_USE_TLS:", settings.EMAIL_USE_TLS)
             print("EMAIL_HOST_USER:", settings.EMAIL_HOST_USER)
             print("DEFAULT_FROM_EMAIL:", settings.DEFAULT_FROM_EMAIL)
             print("PASSWORD EXISTS:", bool(settings.EMAIL_HOST_PASSWORD))
+            print("EMAIL_TIMEOUT:", settings.EMAIL_TIMEOUT)
             print("=" * 50)
+
+            if settings.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend" and not settings.EMAIL_HOST_PASSWORD:
+                raise AuthError("Email sending is not configured correctly. Please set EMAIL_HOST_PASSWORD.")
+
+            connection = get_connection(
+                backend=settings.EMAIL_BACKEND,
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS,
+                timeout=settings.EMAIL_TIMEOUT,
+            )
+
             send_mail(
                 subject="OTP for Email Verification",
                 message=f"Hey,\n\nYour OTP is {otp}",
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[dto.email],
-                fail_silently=False,   
+                fail_silently=False,
+                connection=connection,
             )
+        except AuthError:
+            raise
         except Exception as e:
-            raise AuthError(f"Failed to send OTP: {str(e)}")
+            raise AuthError(
+                "Failed to send OTP. Email service is unavailable. "
+                "Check your SMTP configuration or use a valid email backend. "
+                f"({e})"
+            )
         
         cache.set(
             f"otp:{user.email}",
